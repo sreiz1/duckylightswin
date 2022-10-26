@@ -1,6 +1,6 @@
 # duckylights
 
-This is a project to control a Ducky RGB keyboard from Linux. It aims to replicate the funcionality of the official Windows-only application, although that goal is still very far away.
+This is a project to control a Ducky RGB keyboard from Linux and Windows. It aims to replicate the funcionality of the official Windows-only application, although that goal is still very far away.
 
 ## Features
 

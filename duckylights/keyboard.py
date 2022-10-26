@@ -1,14 +1,25 @@
-from . import hidapi
+import sys
+if sys.platform=='win32':
+    import hid as hidapi
+else:
+    from . import hidapi
 from contextlib import contextmanager
 
-
 def device_path(vendor=0x04d9, product=0x0348, interface=1):
-    return next(hidapi.enumerate(vendor_id=vendor, product_id=product, interface_number=interface)).path
-
+    if sys.platform=='win32':
+        return hidapi.enumerate(vendor_id=vendor)[0]['path']
+    else:
+        return next(hidapi.enumerate(vendor_id=vendor, product_id=product, interface_number=interface)).path
 
 @contextmanager
 def keyboard(path=device_path()):
-    device = DuckyKeyboard(hidapi.open_path(path))
+    if sys.platform=='win32':
+        device=hidapi.device()
+        device.open_path(path)
+        device.set_nonblocking(0)
+        device = DuckyKeyboard(device)
+    else:
+        device = DuckyKeyboard(hidapi.open_path(path))
     yield device
     device.close()
 
@@ -20,11 +31,18 @@ class DuckyKeyboard:
         self._dev = device
     
     def close(self):
-        hidapi.close(self._dev)
-
+        if sys.platform=='win32':
+            self._dev.close()
+        else:
+            hidapi.close(self._dev)
+    
     def _write(self, msg):
-        hidapi.write(self._dev, bytes.fromhex(msg))
-        return hidapi.read(self._dev, 256).hex()
+        if sys.platform=='win32':
+            self._dev.write(bytes.fromhex(msg))
+            return bytes(bytearray(self._dev.read(256))).hex()
+        else:
+            hidapi.write(self._dev, bytes.fromhex(msg))
+            return hidapi.read(self._dev, 256).hex()
 
     @contextmanager
     def programming(self):
